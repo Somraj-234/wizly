@@ -1,0 +1,13 @@
+[
+  ["until", "document.querySelector('.bulb-figure .bulb-closed')"],
+  ["eval", "[...document.querySelectorAll('nav button')].find((button) => button.textContent.trim() === 'Color').click()"],
+  ["until", "document.querySelector('[aria-label=\"Blue\"]')"],
+  ["click", "[aria-label=\"Blue\"]"],
+  ["wait", 250],
+  ["eval", "document.querySelector('.bulb-closed .iso-fill').style.fill"],
+  ["shot", "D:/MyCodes/wizly/figures/wiz-bulb/shots/app-outer.png", ".bulb-figure"],
+  ["eval", "[...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Inner').click()"],
+  ["wait", 200],
+  ["eval", "getComputedStyle(document.querySelector('.bulb-closed')).display"],
+  ["shot", "D:/MyCodes/wizly/figures/wiz-bulb/shots/app-inner.png", ".bulb-figure"]
+]

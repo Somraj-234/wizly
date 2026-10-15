@@ -1,0 +1,8 @@
+[
+  ["until", "document.querySelector('.bulb-closed')"],
+  ["wait", 200],
+  ["shot", "D:/MyCodes/wizly/figures/wiz-bulb/shots/outer.png", ".iso-svg"],
+  ["click", "[data-open-toggle]"],
+  ["wait", 150],
+  ["shot", "D:/MyCodes/wizly/figures/wiz-bulb/shots/inner.png", ".iso-svg"]
+]

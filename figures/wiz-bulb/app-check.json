@@ -1,0 +1,9 @@
+[
+  ["until", "document.querySelector('.bulb-figure .bulb-glass')"],
+  ["eval", "[...document.querySelectorAll('nav button')].find((button) => button.textContent.trim() === 'Color').click()"],
+  ["until", "document.querySelector('[aria-label=\"Blue\"]')"],
+  ["click", "[aria-label=\"Blue\"]"],
+  ["wait", 250],
+  ["eval", "document.querySelector('.bulb-glass .iso-fill').style.fill"],
+  ["shot", "D:/MyCodes/wizly/figures/wiz-bulb/shots/app-color.png", ".bulb-figure"]
+]
