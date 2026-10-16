@@ -2,6 +2,12 @@ import type { Automation, Bulb, Scene } from "./types"
 
 const TOKEN = "wizly.token"
 
+// In local dev this stays empty and Vite's proxy forwards /api to 127.0.0.1:8787.
+// In production (e.g. the Vercel build), set VITE_API_BASE_URL to the backend's
+// public URL, such as https://api.wizly.space, so requests leave the frontend's
+// own origin.
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "")
+
 export function getToken() {
   return sessionStorage.getItem(TOKEN)
 }
@@ -20,7 +26,7 @@ async function request<T>(path: string, init: RequestInit & { json?: unknown } =
     headers.set("Content-Type", "application/json")
     body = JSON.stringify(init.json)
   }
-  const response = await fetch(path, { ...init, headers, body })
+  const response = await fetch(`${API_BASE}${path}`, { ...init, headers, body })
   const data = await response.json().catch(() => ({}))
   if (response.status === 401) {
     window.dispatchEvent(new CustomEvent("wizly-locked"))
@@ -47,6 +53,7 @@ export const api = {
       note: string
     }>("/api/nearby", { method: "POST", json: { wait } }),
   addBulb: (ip: string) => request<Bulb>("/api/bulbs", { method: "POST", json: { ip } }),
+  deleteBulb: (ip: string) => request<{ ok: boolean }>(`/api/bulbs/${ip}`, { method: "DELETE" }),
   bulbs: () => request<{ bulbs: Bulb[] }>("/api/bulbs"),
   hardware: (ip: string) => request<{ summary: Bulb; methods: Record<string, unknown> }>(`/api/bulbs/${ip}/hardware`),
   pilot: (ips: string[], params: Record<string, unknown>) =>

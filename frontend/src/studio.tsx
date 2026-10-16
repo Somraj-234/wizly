@@ -17,6 +17,7 @@ type StudioValue = {
   refresh: () => Promise<void>
   discover: () => Promise<void>
   addIp: (ip: string) => Promise<void>
+  removeBulb: (ip: string) => Promise<void>
   busy: boolean
   notice: string | null
   setNotice: (value: string | null) => void
@@ -110,6 +111,20 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     addIp: (ip) => run(async () => {
       await api.addBulb(ip)
       await refresh()
+    }),
+    removeBulb: (ip) => run(async () => {
+      // Drop the card immediately — the point of deleting is to make it go
+      // away, including for stale/unreachable bulbs where a round trip to the
+      // server isn't guaranteed to succeed. Still tell the server in the
+      // background so it forgets the bulb too (api.deleteBulb is itself
+      // idempotent: it never fails just because the bulb was already gone).
+      setBulbs((current) => current.filter((bulb) => bulb.ip !== ip))
+      if (selected.includes(ip)) setSelected(selected.filter((item) => item !== ip))
+      try {
+        await api.deleteBulb(ip)
+      } catch (error) {
+        setNotice(error instanceof Error ? `Removed here, but the server didn't confirm: ${error.message}` : "Removed here, but the server didn't confirm.")
+      }
     }),
     busy,
     notice,

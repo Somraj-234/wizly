@@ -1,9 +1,16 @@
-import type { Preset, Profile } from "./types"
+import type { Preset, Profile, SensorKey, SensorRule } from "./types"
 
 const PROFILES = "wizly.profiles"
 const PRESETS = "wizly.presets"
 const THEME = "wizly.theme"
 const SELECTED = "wizly.selected"
+const SENSORS = "wizly.sensors"
+
+const DEFAULT_SENSORS: Record<SensorKey, SensorRule> = {
+  clap: { enabled: false, ips: [], action: "toggle" },
+  motion: { enabled: false, ips: [], action: "on", params: { dimming: 70, temp: 3000 } },
+  pir: { enabled: false, ips: [], action: "on", params: { dimming: 50, temp: 2700 } },
+}
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -23,4 +30,6 @@ export const cache = {
   saveTheme: (theme: string) => localStorage.setItem(THEME, theme),
   selected: () => read<string[]>(SELECTED, []),
   saveSelected: (ips: string[]) => localStorage.setItem(SELECTED, JSON.stringify(ips)),
+  sensors: () => ({ ...DEFAULT_SENSORS, ...read<Partial<Record<SensorKey, SensorRule>>>(SENSORS, {}) }),
+  saveSensors: (rules: Record<SensorKey, SensorRule>) => localStorage.setItem(SENSORS, JSON.stringify(rules)),
 }

@@ -165,9 +165,15 @@ class Hub:
             "ports": {"control": CONTROL_PORT, "push": PUSH_PORT},
             "rangeNote": RANGE_NOTE,
         }
-        self.records[ip] = record
-        if isinstance(mac, str):
-            light.mac = mac
+        # `remove()` can pop this ip out of self.lights while the awaits above
+        # were in flight. Nothing below this point awaits, so this check-then-write
+        # is atomic under asyncio's cooperative scheduling: skip writing the record
+        # back if the bulb was deleted while we were talking to it, otherwise a
+        # concurrent refresh can resurrect a bulb right after it was removed.
+        if ip in self.lights:
+            self.records[ip] = record
+            if isinstance(mac, str):
+                light.mac = mac
         try:
             light._async_close()
         except Exception:
@@ -207,6 +213,23 @@ class Hub:
 
     def list_bulbs(self) -> list[dict[str, Any]]:
         return list(self.records.values())
+
+    async def remove(self, ip: str) -> None:
+        """Forget a bulb. Idempotent on purpose: removing something that is
+        already gone (a second click, a stale card, a race with a refresh)
+        is still a successful removal from the caller's point of view.
+        """
+        light = self.lights.pop(ip, None)
+        self.records.pop(ip, None)
+        self.last_pilot.pop(ip, None)
+        self.kelvin.pop(ip, None)
+        self._call_locks.pop(ip, None)
+        if light is not None:
+            try:
+                await light.async_close()
+            except Exception:
+                log.debug("closing a bulb socket during removal failed", exc_info=True)
+        self._remember()
 
     async def refresh(self, ip: str | None = None) -> list[dict[str, Any]]:
         if ip is None and self._refresh_lock.locked():

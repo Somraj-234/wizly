@@ -117,8 +117,11 @@ async def run_due(send: SendPilot) -> None:
                 continue
             key = f"rhythm:{today}:{label}"
             if fired.get("rhythm") != key:
+                action = current.get("action")
                 params = current.get("params") or {}
-                if params:
+                if action is not None:
+                    await _apply(send, ips, action, params)
+                elif params:
                     await send(ips, params)
                 fired["rhythm"] = key
                 changed = True
@@ -138,11 +141,14 @@ def _clock_minutes(value: Any) -> int | None:
 
 
 async def _apply(send: SendPilot, ips: list[str], action: Any, params: dict) -> None:
+    """Apply a configured action. `action` picks the mode, `params` carries
+    whichever of r/g/b, temp, sceneId, speed, and dimming that mode needs.
+    """
     if action == "off":
         await send(ips, {"state": False})
         return
-    payload = dict(params)
-    if action == "on" and "state" not in payload:
+    payload = dict(params or {})
+    if "state" not in payload:
         payload["state"] = True
     await send(ips, payload)
 

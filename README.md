@@ -25,6 +25,8 @@ Scan the network from Lights, or add a bulb by IP if broadcast is blocked. Selec
 
 ## Read next
 
+- `docs/GUIDE.md` — complete guide to every tab, every control, and what each error message means
+- `docs/DEPLOY.md` — deploying the frontend to Vercel and the backend behind Cloudflare Tunnel, so it keeps reaching your bulbs
 - `docs/PLAN.md` — how the app is split
 - `docs/CHANGELOG.md` — what was added
 - `docs/ISSUES.md` — where the Pro cloud docs, the local UDP docs, and pywizlight disagree, and what the lock can and cannot do

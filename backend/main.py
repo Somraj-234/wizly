@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
+import os
 import re
 import secrets
 from contextlib import asynccontextmanager
@@ -27,7 +28,8 @@ log = logging.getLogger("wizly")
 
 hub = Hub()
 stop = asyncio.Event()
-YOUTUBE_ID = re.compile(r"(?:v=|vi=|youtu\.be/|shorts/|embed/)([\w-]{11})")
+YOUTUBE_ID = re.compile(r"(?:v=|vi=|youtu\.be/|shorts/|embed/|live/)([\w-]{11})")
+BARE_YOUTUBE_ID = re.compile(r"^([\w-]{11})$")
 
 
 class DiscoverBody(BaseModel):
@@ -126,10 +128,19 @@ async def lifespan(_: FastAPI):
     await hub.close()
 
 
+# WIZLY_ALLOWED_ORIGINS: comma-separated exact origins, e.g.
+#   WIZLY_ALLOWED_ORIGINS=https://wizly.space,https://www.wizly.space
+# WIZLY_ALLOWED_ORIGIN_REGEX: one regex for origins that vary, e.g. Vercel
+# preview deployments: WIZLY_ALLOWED_ORIGIN_REGEX=https://.*\.vercel\.app
+_default_origins = "http://127.0.0.1:5173,http://localhost:5173"
+ALLOWED_ORIGINS = [origin.strip() for origin in os.environ.get("WIZLY_ALLOWED_ORIGINS", _default_origins).split(",") if origin.strip()]
+ALLOWED_ORIGIN_REGEX = os.environ.get("WIZLY_ALLOWED_ORIGIN_REGEX") or None
+
 app = FastAPI(title="Wizly", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -246,6 +257,14 @@ async def bulbs(x_wizly_token: str | None = Header(default=None)) -> dict:
     return {"bulbs": hub.list_bulbs()}
 
 
+@app.delete("/api/bulbs/{ip}")
+async def delete_bulb(ip: str, x_wizly_token: str | None = Header(default=None)) -> dict:
+    _require(x_wizly_token)
+    # Idempotent: removing a bulb that is already gone still counts as removed.
+    await hub.remove(ip)
+    return {"ok": True}
+
+
 @app.get("/api/bulbs/{ip}/hardware")
 async def hardware(ip: str, x_wizly_token: str | None = Header(default=None)) -> dict:
     _require(x_wizly_token)
@@ -331,9 +350,16 @@ def put_automations(body: dict, x_wizly_token: str | None = Header(default=None)
 @app.post("/api/media/youtube")
 def youtube_palette(body: YoutubeBody, x_wizly_token: str | None = Header(default=None)) -> dict:
     _require(x_wizly_token)
-    match = YOUTUBE_ID.search(body.url)
+    cleaned = body.url.strip()
+    match = YOUTUBE_ID.search(cleaned) or BARE_YOUTUBE_ID.match(cleaned)
     if not match:
-        raise HTTPException(status_code=400, detail="That does not look like a YouTube link.")
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"'{cleaned}' does not look like a YouTube link. "
+                "Paste a watch, youtu.be, shorts, embed, or live link, or just the 11-character video id."
+            ),
+        )
     video_id = match.group(1)
     thumb = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
     request = Request(thumb, headers={"User-Agent": "wizly"})

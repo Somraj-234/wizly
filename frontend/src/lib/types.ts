@@ -64,7 +64,15 @@ export type Preset = {
 
 export type RhythmPoint = {
   minutes: number
-  params: Pilot
+  action?: ActionKind
+  params?: Pilot
+}
+
+export type ActionKind = "on" | "off" | "toggle" | "color" | "white" | "scene"
+
+export type ActionConfig = {
+  kind: ActionKind
+  params?: Pilot
 }
 
 export type Automation = {
@@ -79,10 +87,19 @@ export type Automation = {
   offsetMin?: number
   latitude?: number
   longitude?: number
-  action?: "on" | "off" | "pilot"
+  action?: ActionKind
   params?: Pilot
   points?: RhythmPoint[]
   fired?: Record<string, string>
+}
+
+export type SensorKey = "clap" | "motion" | "pir"
+
+export type SensorRule = {
+  enabled: boolean
+  ips: string[]
+  action: ActionKind
+  params?: Pilot
 }
 
 export type ViewId =
