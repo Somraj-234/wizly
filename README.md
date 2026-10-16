@@ -1,27 +1,73 @@
 # Wizly
 
-A local site for Philips WiZ bulbs. React and Tailwind in the browser, FastAPI and the pywizlight package you already installed on this machine.
+A self-hosted control panel for Philips WiZ smart bulbs. A FastAPI backend talks the
+bulbs' local UDP protocol directly (no cloud account, no app pairing), and a React
+frontend gives you color, white, scenes, gradients, music/media sync, presets,
+schedules, sunrise/sunset, rhythms, sensor-triggered automations, a PIN lock, and a raw
+hardware inspector.
 
-The browser stores bulb names, rooms, and presets. The Python process discovers bulbs, sends `setPilot`, and runs schedules.
+Bulb state (names, rooms, presets, sensor settings) is kept in the browser's local
+storage. Automations, known bulbs, and the lock PIN are kept by the backend process.
 
-## Run
+## How it works
 
-From `D:\MyCodes\wizly`, in two terminals:
-
-```powershell
-.\venv\Scripts\python.exe -m pip install -r backend\requirements.txt
-.\venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8787
+```
+Browser (React + Vite)  <--HTTP-->  FastAPI backend  <--UDP 38899/38900-->  WiZ bulbs
 ```
 
-```powershell
+WiZ bulbs only accept commands over UDP on the local network, so the backend must run
+on a machine that shares a network with the bulbs. See `docs/DEPLOY.md` if you want the
+frontend and backend hosted on different machines/services while still reaching bulbs
+on your home network.
+
+## Requirements
+
+- Python 3.11+
+- Node.js 18+ and npm
+- A computer on the same Wi-Fi/LAN as the bulbs, to run the backend
+
+## Setup
+
+Clone the repository, then set up each side from the project root.
+
+### Backend
+
+```sh
+python -m venv venv
+# Windows
+.\venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+.\venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8787
+# macOS/Linux
+source venv/bin/activate
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --host 127.0.0.1 --port 8787
+```
+
+### Frontend
+
+```sh
 cd frontend
 npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The dev server proxies `/api` to port 8787.
+Open the printed `http://127.0.0.1:5173` address. The Vite dev server proxies `/api`
+requests to the backend on port 8787, so both need to be running at the same time.
 
-Scan the network from Lights, or add a bulb by IP if broadcast is blocked. Select a bulb before changing color, modes, music, or presets.
+## Using it
+
+From the **Lights** tab, scan the network to discover bulbs, or add one by IP if
+broadcast discovery is blocked on your network. Click a bulb's card to select it —
+most other tabs (Color, Modes, Gradient, Music, Media, Presets, Automations) act on
+whichever bulbs are currently selected.
+
+## Project layout
+
+- `backend/` — FastAPI app, WiZ UDP protocol, scheduler, local JSON storage
+- `frontend/` — React + Tailwind UI
+- `data/` — backend-managed JSON (known bulbs, automations, lock state); not meant for
+  version control
+- `docs/` — see below
 
 ## Read next
 
