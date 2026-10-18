@@ -58,7 +58,7 @@ for `ngrok`, `frp`, `rathole`, etc. — the DNS/tunnel step is the only part tha
 
 So the split frontend/backend setup works at all, this pass added:
 
-- **`frontend/src/lib/api.ts`** now prefixes every request with `API_BASE_URL` (a
+- **`frontend/src/lib/api.ts`** now prefixes every request with `VITE_API_BASE_URL` (a
   build-time env var). Empty/unset in dev, so Vite's existing `/api` proxy still works
   unchanged. Set it in Vercel for production so the deployed frontend calls your real
   backend host instead of its own Vercel origin.
@@ -72,7 +72,7 @@ So the split frontend/backend setup works at all, this pass added:
 ## Part 2 — Set the frontend's backend URL (Vercel)
 
 1. Vercel dashboard → your project → **Settings → Environment Variables**.
-2. Add `API_BASE_URL` = `https://api.wizly.space` for the **Production** environment
+2. Add `VITE_API_BASE_URL` = `https://api.wizly.space` for the **Production** environment
    (add it for Preview too if you want preview deployments to hit the same backend).
 3. Redeploy (env var changes need a new build to take effect in a Vite app).
 

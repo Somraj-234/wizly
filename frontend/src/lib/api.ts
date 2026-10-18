@@ -3,10 +3,10 @@ import type { Automation, Bulb, Scene } from "./types"
 const TOKEN = "wizly.token"
 
 // In local dev this stays empty and Vite's proxy forwards /api to 127.0.0.1:8787.
-// In production (e.g. the Vercel build), set API_BASE_URL to the backend's
+// In production (e.g. the Vercel build), set VITE_API_BASE_URL to the backend's
 // public URL, such as https://api.wizly.space, so requests leave the frontend's
 // own origin.
-const API_BASE = (import.meta.env.API_BASE_URL ?? "").replace(/\/+$/, "")
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "")
 
 export function getToken() {
   return sessionStorage.getItem(TOKEN)
