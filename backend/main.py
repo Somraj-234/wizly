@@ -26,6 +26,14 @@ from backend.store import read_json, write_json
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("wizly")
 
+# pywizlight calls asyncio.get_event_loop() while constructing each bulb.
+# Python 3.14 no longer implicitly creates a loop in this situation, so
+# install one before Hub() initializes the saved bulbs.
+try:
+    asyncio.get_event_loop()
+except RuntimeError:
+    asyncio.set_event_loop(asyncio.new_event_loop())
+
 hub = Hub()
 stop = asyncio.Event()
 YOUTUBE_ID = re.compile(r"(?:v=|vi=|youtu\.be/|shorts/|embed/|live/)([\w-]{11})")
